@@ -1,0 +1,67 @@
+#!/usr/bin/perl
+
+=about
+
+Author: Farhad Mehdizada (@ferhadme)
+
+Perl script for visualizing repository summaries recursively starting from the specified directory location
+Uses git-summary (git-extras) as a dependency
+
+Usage: ./git-summmary starting-directory
+
+=cut
+
+use strict;
+use warnings;
+use v5.32;
+
+sub main {
+    my $path = shift @ARGV or die &usage;
+    if (not defined $path) {
+	die &usage;
+    }
+
+    my %summary_hash;
+    &traverse_repos($path, %summary_hash);
+    &show_git_summmary(%summary_hash);
+}
+
+sub traverse_repos {
+    (my $path, my %summary_hash) = (@_);
+
+    if (not -d $path) {
+	return;
+    }
+
+    chdir($path);
+    if (-d ".git") {
+	print "Git repository found ", $path, "\n";
+	&calculate_summary(%summary_hash);
+    }
+
+    foreach my $dir (<*>) {
+	&traverse_repos($dir);
+    }
+
+    chdir("..");
+}
+
+sub calculate_summary {
+    my $current_summary = `git summary`;
+    print $current_summary, "\n";
+}
+
+sub show_git_summmary {
+    print("base directory", (" " x 23), ": ", "VALUE", "\n");
+    print("repo age (oldest / latest / average)", (" " x 1), ": ", "VALUE", "\n");
+    print("active (earliest / most recent)", (" " x 6), ": ", "VALUE", "\n");
+    print("commits", (" " x 30), ": ", "VALUE", "\n");
+    print("files", (" " x 32), ": ", "VALUE", "\n");
+}
+
+sub usage {
+    "Usage: ";
+}
+
+main;
+exit;
