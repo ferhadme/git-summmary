@@ -2,3 +2,10 @@ Perl script for visualizing repository summaries recursively starting from the s
 Uses git-summary (git-extras) as a dependency
 
 Usage: ./git-summmary starting-directory
+
+base directory                  : <base directory name>
+repo age (oldest / latest)      : <oldest> / <latest>
+active (earliest / most recent) : <earliest> / <most recent>
+commits                         : <total number of commits>
+files                           : <total number of files>
+TODO: authors...

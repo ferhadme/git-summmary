@@ -9,6 +9,13 @@ Uses git-summary (git-extras) as a dependency
 
 Usage: ./git-summmary starting-directory
 
+base directory                  : <base directory name>
+repo age (oldest / latest)      : <oldest> / <latest>
+active (earliest / most recent) : <earliest> / <most recent>
+commits                         : <total number of commits>
+files                           : <total number of files>
+TODO: authors...
+
 =cut
 
 use strict;
@@ -19,6 +26,11 @@ sub main {
     my $path = shift @ARGV or die &usage;
     if (not defined $path) {
 	die &usage;
+    }
+
+    my $git_summary_path = system("which git-summary");
+    if ($git_summary_path != 0) {
+	die "git-summary (git-extras) as a dependency not found";
     }
 
     my %summary_hash;
@@ -40,28 +52,46 @@ sub traverse_repos {
     }
 
     foreach my $dir (<*>) {
-	&traverse_repos($dir);
+	&traverse_repos($dir, %summary_hash);
     }
 
     chdir("..");
 }
 
 sub calculate_summary {
+    my %summary_hash = (@_);
     my $current_summary = `git summary`;
+
+    # ($summary_hash{'title'}, $summary_hash{'value'}) = ("Title", 2);
+
     print $current_summary, "\n";
 }
 
 sub show_git_summmary {
-    print("base directory", (" " x 23), ": ", "VALUE", "\n");
-    print("repo age (oldest / latest / average)", (" " x 1), ": ", "VALUE", "\n");
-    print("active (earliest / most recent)", (" " x 6), ": ", "VALUE", "\n");
-    print("commits", (" " x 30), ": ", "VALUE", "\n");
-    print("files", (" " x 32), ": ", "VALUE", "\n");
+    print("base directory", (" " x 18), ": ", "VALUE", "\n");
+    print("repo age (oldest / latest)", (" " x 6), ": ", "VALUE", "\n");
+    print("active (earliest / most recent)", (" " x 1), ": ", "VALUE", "\n");
+    print("commits", (" " x 25), ": ", "VALUE", "\n");
+    print("files", (" " x 27), ": ", "VALUE", "\n");
+
+    # TODO: authors...
 }
 
 sub usage {
     "Usage: ";
 }
+
+# sub options {
+#     (
+#      {
+# 	 "title" => "base directory",
+# 	     "space" => 18,
+# 	     ""
+#      },
+#      {
+#      }
+#     );
+# }
 
 main;
 exit;
