@@ -77,7 +77,8 @@ sub update_summary {
     my $curr_summ = `git summary`;
 
     $curr_summ =~ /repo age\s*:\s((\d+)\syears?,\s)?(\d+)\smonths/;
-    my $curr_age = ($2 * 12) + $3;
+    # TODO: Fix undefined #2
+    my $curr_age = (((defined $2) ? $2 : 0) * 12) + $3;
     &init_min_max_params($curr_age, "age", $summ_hash_ref);
 
     my ($curr_active) = ($curr_summ =~ /active\s*:\s(\d+)\sdays/);
