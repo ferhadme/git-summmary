@@ -22,10 +22,12 @@ use strict;
 use warnings;
 use v5.32;
 
+
+
 sub main {
-    my $path = shift @ARGV or die &usage;
+    my $path = shift @ARGV or die "Usage: ./git-summmary starting-directory";
     if (not defined $path) {
-	die &usage;
+	die "Usage: ./git-summmary starting-directory";
     }
 
     my $git_summary_path = system("which git-summary");
@@ -33,13 +35,13 @@ sub main {
 	die "git-summary (git-extras) as a dependency not found";
     }
 
-    my %summary_hash;
-    &traverse_repos($path, %summary_hash);
-    &show_git_summmary(%summary_hash);
+    my %summary_hash = &init_summary($path);
+    &traverse_repos($path, \%summary_hash);
+    &show_git_summmary(\%summary_hash);
 }
 
 sub traverse_repos {
-    (my $path, my %summary_hash) = (@_);
+    (my $path, my $summary_hash_ref) = (@_);
 
     if (not -d $path) {
 	return;
@@ -48,50 +50,73 @@ sub traverse_repos {
     chdir($path);
     if (-d ".git") {
 	print "Git repository found ", $path, "\n";
-	&calculate_summary(%summary_hash);
+	&update_summary($summary_hash_ref);
     }
 
     foreach my $dir (<*>) {
-	&traverse_repos($dir, %summary_hash);
+	&traverse_repos($dir, $summary_hash_ref);
     }
 
     chdir("..");
 }
 
-sub calculate_summary {
-    my %summary_hash = (@_);
-    my $current_summary = `git summary`;
+sub init_summary {
+    (
+     "dirname" => (@_),
+     "min_age" => 0,
+     "max_age" => 0,
+     "min_active" => 0,
+     "max_active" => 0,
+     "commits" => 0,
+     "files" => 0
+    );
+}
 
-    # ($summary_hash{'title'}, $summary_hash{'value'}) = ("Title", 2);
+sub update_summary {
+    my ($summ_hash_ref) = (@_);
+    my $curr_summ = `git summary`;
 
-    print $current_summary, "\n";
+    $curr_summ =~ /repo age\s*:\s((\d+)\syears?,\s)?(\d+)\smonths/;
+    my $curr_age = ($2 * 12) + $3;
+    &init_min_max_params($curr_age, "age", $summ_hash_ref);
+
+    my ($curr_active) = ($curr_summ =~ /active\s*:\s(\d+)\sdays/);
+    &init_min_max_params($curr_active, "active", $summ_hash_ref);
+
+    my ($commits) = ($curr_summ =~ /commits\s*:\s(\d+)/);
+    $summ_hash_ref->{"commits"} += $commits;
+
+    my ($files) = ($curr_summ =~ /files\s*:\s(\d+)/);
+    $summ_hash_ref->{"files"} += $files;
+
+    print $curr_summ, "\n";
+}
+
+sub init_min_max_params {
+    (my $curr, my $hash_key, my $hash_ref) = (@_);
+
+    if ($curr < $hash_ref->{"min_$hash_key"}) {
+	$hash_ref->{"min_$hash_key"} = $curr;
+    }
+
+    if ($curr > $hash_ref->{"max_$hash_key"}) {
+	$hash_ref->{"max_$hash_key"} = $curr;
+    }
 }
 
 sub show_git_summmary {
-    print("base directory", (" " x 18), ": ", "VALUE", "\n");
-    print("repo age (oldest / latest)", (" " x 6), ": ", "VALUE", "\n");
-    print("active (earliest / most recent)", (" " x 1), ": ", "VALUE", "\n");
-    print("commits", (" " x 25), ": ", "VALUE", "\n");
-    print("files", (" " x 27), ": ", "VALUE", "\n");
+    (my $summary_hash_ref) = (@_);
+
+    print "base directory                  : ", $summary_hash_ref->{"dirname"}, "\n";
+    print "repo age (oldest / latest)      : ", $summary_hash_ref->{"min_age"}, " / ",
+	$summary_hash_ref->{"max_age"}, "\n";
+    print "active (earliest / most recent) : ", $summary_hash_ref->{"min_active"}, " / ",
+	$summary_hash_ref->{"max_active"}, "\n";
+    print "commits                         : ", $summary_hash_ref->{"commits"}, "\n";
+    print "files                           : ", $summary_hash_ref->{"files"}, "\n";
 
     # TODO: authors...
 }
-
-sub usage {
-    "Usage: ";
-}
-
-# sub options {
-#     (
-#      {
-# 	 "title" => "base directory",
-# 	     "space" => 18,
-# 	     ""
-#      },
-#      {
-#      }
-#     );
-# }
 
 main;
 exit;
