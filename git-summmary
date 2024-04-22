@@ -63,9 +63,9 @@ sub traverse_repos {
 sub init_summary {
     (
      "dirname" => (@_),
-     "min_age" => 0,
+     "min_age" => undef,
      "max_age" => 0,
-     "min_active" => 0,
+     "min_active" => undef,
      "max_active" => 0,
      "commits" => 0,
      "files" => 0
@@ -76,9 +76,8 @@ sub update_summary {
     my ($summ_hash_ref) = (@_);
     my $curr_summ = `git summary`;
 
-    $curr_summ =~ /repo age\s*:\s((\d+)\syears?,\s)?(\d+)\smonths/;
-    # TODO: Fix undefined #2
-    my $curr_age = (((defined $2) ? $2 : 0) * 12) + $3;
+    $curr_summ =~ /repo age\s*:\s((\d+)\syears?(,\s)?)?((\d+)\smonths?(,\s)?)?((\d+)\sweeks?(,\s)?)?((\d+)\sdays?(,\s)?)?/;
+    my $curr_age = ($2 || 0) * 3600 + ($5 || 0) * 30 + ($8 || 0) * 7 + ($11 || 0);
     &init_min_max_params($curr_age, "age", $summ_hash_ref);
 
     my ($curr_active) = ($curr_summ =~ /active\s*:\s(\d+)\sdays/);
@@ -96,7 +95,7 @@ sub update_summary {
 sub init_min_max_params {
     (my $curr, my $hash_key, my $hash_ref) = (@_);
 
-    if ($curr < $hash_ref->{"min_$hash_key"}) {
+    if (!defined $hash_ref->{"min_$hash_key"} || $curr < $hash_ref->{"min_$hash_key"}) {
 	$hash_ref->{"min_$hash_key"} = $curr;
     }
 
