@@ -10,18 +10,20 @@ Uses git-summary (git-extras) as a dependency
 Usage: ./git-summmary starting-directory
 
 base directory                  : <base directory name>
-repo age (oldest / latest)      : <oldest> / <latest>
-active (earliest / most recent) : <earliest> / <most recent>
+repo age (latest / oldest)      : <latest> day(s) / <oldest> day(s)
+active (earliest / most recent) : <earliest> day(s) / <most recent> day(s)
 commits                         : <total number of commits>
 files                           : <total number of files>
-TODO: authors...
+authors                         :
+  <author_1 commits count>  <author_1 name>  <author_1 commit percentage>
+  ...
+  <author_n commits count>  <author_n name>  <author_n commit percentage>
 
 =cut
 
 use strict;
 use warnings;
 use v5.32;
-
 
 
 sub main {
@@ -36,12 +38,13 @@ sub main {
     }
 
     my %summary_hash = &init_summary($path);
-    &traverse_repos($path, \%summary_hash);
-    &show_git_summmary(\%summary_hash);
+    my %authors_hash = ();
+    &traverse_repos($path, \%summary_hash, \%authors_hash);
+    &show_git_summmary(\%summary_hash, \%authors_hash);
 }
 
 sub traverse_repos {
-    (my $path, my $summary_hash_ref) = (@_);
+    (my $path, my $summary_hash_ref, my $authors_hash_ref) = (@_);
 
     if (not -d $path) {
 	return;
@@ -50,30 +53,18 @@ sub traverse_repos {
     chdir($path);
     if (-d ".git") {
 	print "Git repository found ", $path, "\n";
-	&update_summary($summary_hash_ref);
+	&update_summary($summary_hash_ref, $authors_hash_ref);
     }
 
     foreach my $dir (<*>) {
-	&traverse_repos($dir, $summary_hash_ref);
+	&traverse_repos($dir, $summary_hash_ref, $authors_hash_ref);
     }
 
     chdir("..");
 }
 
-sub init_summary {
-    (
-     "dirname" => (@_),
-     "min_age" => undef,
-     "max_age" => 0,
-     "min_active" => undef,
-     "max_active" => 0,
-     "commits" => 0,
-     "files" => 0
-    );
-}
-
 sub update_summary {
-    my ($summ_hash_ref) = (@_);
+    my ($summ_hash_ref, $authors_hash_ref) = (@_);
     my $curr_summ = `git summary`;
 
     $curr_summ =~ /repo age\s*:\s((\d+)\syears?(,\s)?)?((\d+)\smonths?(,\s)?)?((\d+)\sweeks?(,\s)?)?((\d+)\sdays?(,\s)?)?/;
@@ -89,7 +80,13 @@ sub update_summary {
     my ($files) = ($curr_summ =~ /files\s*:\s(\d+)/);
     $summ_hash_ref->{"files"} += $files;
 
-    print $curr_summ, "\n";
+    while ($curr_summ =~ /(\d+)\t(\w+(\s\w+)?)\s+(\d+.\d+)%/g) {
+	if (!defined $authors_hash_ref->{$2}) {
+	    $authors_hash_ref->{$2} = $1;
+	} else {
+	    $authors_hash_ref->{$2} += $1;
+	}
+    }
 }
 
 sub init_min_max_params {
@@ -104,19 +101,50 @@ sub init_min_max_params {
     }
 }
 
-sub show_git_summmary {
-    (my $summary_hash_ref) = (@_);
+sub init_summary {
+    (
+     "dirname" => (@_),
+     "min_age" => undef,
+     "max_age" => 0,
+     "min_active" => undef,
+     "max_active" => 0,
+     "commits" => 0,
+     "files" => 0
+    );
+}
 
+sub frmt_day {
+    ($_) = (@_);
+    return "$_ day" . ($_ > 1 ? "s" : "");
+}
+
+sub show_git_summmary {
+    (my $summary_hash_ref, my $authors_hash_ref) = (@_);
+
+    print "\n";
     print "base directory                  : ", $summary_hash_ref->{"dirname"}, "\n";
-    print "repo age (oldest / latest)      : ", $summary_hash_ref->{"min_age"}, " / ",
-	$summary_hash_ref->{"max_age"}, "\n";
-    print "active (earliest / most recent) : ", $summary_hash_ref->{"min_active"}, " / ",
-	$summary_hash_ref->{"max_active"}, "\n";
+    print "repo age (latest / oldest)      : ", frmt_day($summary_hash_ref->{"min_age"}), " / ",
+	frmt_day($summary_hash_ref->{"max_age"}), "\n";
+    print "active (earliest / most recent) : ", frmt_day($summary_hash_ref->{"min_active"}), " / ",
+	frmt_day($summary_hash_ref->{"max_active"}), "\n";
     print "commits                         : ", $summary_hash_ref->{"commits"}, "\n";
     print "files                           : ", $summary_hash_ref->{"files"}, "\n";
 
-    # TODO: authors...
+    print "authors                         :\n";
+    my $ident_c = 0;
+    my $ident_a = 0;
+    foreach my $k (keys %$authors_hash_ref) {
+	$ident_c = length("$authors_hash_ref->{$k}") if length("$authors_hash_ref->{$k}") > $ident_c;
+	$ident_a = length($k) if length($k) > $ident_a;
+    }
+
+    foreach my $k (sort { $authors_hash_ref->{$a} <=> $authors_hash_ref->{$b} } keys %$authors_hash_ref) {
+	print "  $authors_hash_ref->{$k}  ", " " x ($ident_c - length("$authors_hash_ref->{$k}")),
+	    "$k  ", " " x ($ident_a - length($k)),
+	    sprintf "%.2f\n", ($authors_hash_ref->{$k} / $summary_hash_ref->{"commits"}) * 100;
+    }
 }
+
 
 main;
 exit;
