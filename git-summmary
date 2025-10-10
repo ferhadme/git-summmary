@@ -29,12 +29,12 @@ use v5.32;
 sub main {
     my $path = shift @ARGV or die "Usage: ./git-summmary starting-directory";
     if (not defined $path) {
-	die "Usage: ./git-summmary starting-directory";
+        die "Usage: ./git-summmary starting-directory";
     }
 
     my $git_summary_path = system("which git-summary");
     if ($git_summary_path != 0) {
-	die "git-summary (git-extras) as a dependency not found";
+        die "git-summary (git-extras) as a dependency not found";
     }
 
     my %summary_hash = &init_summary($path);
@@ -47,17 +47,17 @@ sub traverse_repos {
     (my $path, my $summary_hash_ref, my $authors_hash_ref) = (@_);
 
     if (not -d $path) {
-	return;
+        return;
     }
 
     chdir($path);
     if (-d ".git") {
-	print "Git repository found ", $path, "\n";
-	&update_summary($summary_hash_ref, $authors_hash_ref);
+        print "Git repository found ", $path, "\n";
+        &update_summary($summary_hash_ref, $authors_hash_ref);
     }
 
     foreach my $dir (<*>) {
-	&traverse_repos($dir, $summary_hash_ref, $authors_hash_ref);
+        &traverse_repos($dir, $summary_hash_ref, $authors_hash_ref);
     }
 
     chdir("..");
@@ -81,11 +81,11 @@ sub update_summary {
     $summ_hash_ref->{"files"} += $files;
 
     while ($curr_summ =~ /(\d+)\t(\w+(\s\w+)?)\s+(\d+.\d+)%/g) {
-	if (!defined $authors_hash_ref->{$2}) {
-	    $authors_hash_ref->{$2} = $1;
-	} else {
-	    $authors_hash_ref->{$2} += $1;
-	}
+        if (!defined $authors_hash_ref->{$2}) {
+            $authors_hash_ref->{$2} = $1;
+        } else {
+            $authors_hash_ref->{$2} += $1;
+        }
     }
 }
 
@@ -93,11 +93,11 @@ sub init_min_max_params {
     (my $curr, my $hash_key, my $hash_ref) = (@_);
 
     if (!defined $hash_ref->{"min_$hash_key"} || $curr < $hash_ref->{"min_$hash_key"}) {
-	$hash_ref->{"min_$hash_key"} = $curr;
+        $hash_ref->{"min_$hash_key"} = $curr;
     }
 
     if ($curr > $hash_ref->{"max_$hash_key"}) {
-	$hash_ref->{"max_$hash_key"} = $curr;
+        $hash_ref->{"max_$hash_key"} = $curr;
     }
 }
 
@@ -124,9 +124,9 @@ sub show_git_summmary {
     print "\n";
     print "base directory                  : ", $summary_hash_ref->{"dirname"}, "\n";
     print "repo age (latest / oldest)      : ", frmt_day($summary_hash_ref->{"min_age"}), " / ",
-	frmt_day($summary_hash_ref->{"max_age"}), "\n";
+        frmt_day($summary_hash_ref->{"max_age"}), "\n";
     print "active (earliest / most recent) : ", frmt_day($summary_hash_ref->{"min_active"}), " / ",
-	frmt_day($summary_hash_ref->{"max_active"}), "\n";
+        frmt_day($summary_hash_ref->{"max_active"}), "\n";
     print "commits                         : ", $summary_hash_ref->{"commits"}, "\n";
     print "files                           : ", $summary_hash_ref->{"files"}, "\n";
 
@@ -134,14 +134,14 @@ sub show_git_summmary {
     my $ident_c = 0;
     my $ident_a = 0;
     foreach my $k (keys %$authors_hash_ref) {
-	$ident_c = length("$authors_hash_ref->{$k}") if length("$authors_hash_ref->{$k}") > $ident_c;
-	$ident_a = length($k) if length($k) > $ident_a;
+        $ident_c = length("$authors_hash_ref->{$k}") if length("$authors_hash_ref->{$k}") > $ident_c;
+        $ident_a = length($k) if length($k) > $ident_a;
     }
 
     foreach my $k (sort { $authors_hash_ref->{$a} <=> $authors_hash_ref->{$b} } keys %$authors_hash_ref) {
-	print "  $authors_hash_ref->{$k}  ", " " x ($ident_c - length("$authors_hash_ref->{$k}")),
-	    "$k  ", " " x ($ident_a - length($k)),
-	    sprintf "%.2f\n", ($authors_hash_ref->{$k} / $summary_hash_ref->{"commits"}) * 100;
+        print "  $authors_hash_ref->{$k}  ", " " x ($ident_c - length("$authors_hash_ref->{$k}")),
+            "$k  ", " " x ($ident_a - length($k)),
+            sprintf "%.2f\n", ($authors_hash_ref->{$k} / $summary_hash_ref->{"commits"}) * 100;
     }
 }
 
