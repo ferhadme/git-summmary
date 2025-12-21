@@ -33,9 +33,11 @@ sub main {
         die "Usage: ./git-summmary starting-directory";
     }
 
-    my $git_summary_path = system("which git-summary");
-    if ($git_summary_path != 0) {
-        die "git-summary (git-extras) as a dependency not found";
+    my $git_summary_path = `which git-summary 2>/dev/null`;
+    chomp($git_summary_path);
+
+    if (!$git_summary_path || !-x $git_summary_path) {
+        die "Error: git-summary not found. Please install git-extras.\n";
     }
 
     my %summary_hash = &init_summary($path);
@@ -45,7 +47,7 @@ sub main {
 }
 
 sub traverse_repos {
-    (my $path, my $summary_hash_ref, my $authors_hash_ref) = (@_);
+    my ($path, $summary_hash_ref, $authors_hash_ref) = (@_);
 
     if (not -d $path) {
         return;
@@ -70,10 +72,10 @@ sub update_summary {
 
     $curr_summ =~ /repo age\s*:\s((\d+)\syears?(,\s)?)?((\d+)\smonths?(,\s)?)?((\d+)\sweeks?(,\s)?)?((\d+)\sdays?(,\s)?)?/;
     my $curr_age = ($2 || 0) * 3600 + ($5 || 0) * 30 + ($8 || 0) * 7 + ($11 || 0);
-    &init_min_max_params($curr_age, "age", $summ_hash_ref);
+    &update_min_max_params($curr_age, "age", $summ_hash_ref);
 
     my ($curr_active) = ($curr_summ =~ /active on\s*:\s(\d+)\sdays/);
-    &init_min_max_params($curr_active, "active", $summ_hash_ref);
+    &update_min_max_params($curr_active, "active", $summ_hash_ref);
 
     my ($commits) = ($curr_summ =~ /commits\s*:\s(\d+)/);
     $summ_hash_ref->{"commits"} += $commits;
@@ -88,9 +90,11 @@ sub update_summary {
             $authors_hash_ref->{$2} += $1;
         }
     }
+
+    $summ_hash_ref->{"repo_count"} += 1;
 }
 
-sub init_min_max_params {
+sub update_min_max_params {
     my ($curr, $hash_key, $hash_ref) = (@_);
 
     if (!defined $hash_ref->{"min_$hash_key"} || $curr < $hash_ref->{"min_$hash_key"}) {
@@ -104,6 +108,7 @@ sub init_min_max_params {
 
 sub init_summary {
     (
+     "repo_count" => 0,
      "dirname" => (@_),
      "min_age" => undef,
      "max_age" => 0,
@@ -121,6 +126,11 @@ sub frmt_day {
 
 sub show_git_summmary {
     (my $summary_hash_ref, my $authors_hash_ref) = (@_);
+
+    if ($summary_hash_ref->{"repo_count"} == 0) {
+        print "Git repository is not found in directory scan\n";
+        exit;
+    }
 
     print "\n";
     print "base directory                  : ", $summary_hash_ref->{"dirname"}, "\n";
