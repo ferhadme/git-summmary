@@ -1,18 +1,18 @@
-#### About
+### About
 Perl script for visualizing repository summaries recursively starting from the specified directory location
 Uses git-summary (git-extras) as a dependency
 
-#### Dependencies
+### Dependencies
 - perl
 - git-extras
 
-#### Installation
+### Installation
 Available in AUR Repository only
 ```sh
 $ yay -S git-summmary
 ```
 
-#### Usage
+### Usage
 
 ```
 $ ./git-summmary starting-directory
