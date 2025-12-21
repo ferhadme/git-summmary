@@ -1,16 +1,27 @@
 ### About
 Perl script for visualizing repository summaries recursively starting from the specified directory location
 
-Uses git-summary (git-extras) as a dependency
+While `git-summary` (from git-extras) provides statistics for a single repository, `git-summmary` recursively scans a directory tree and generates statistics for **all repositories** it finds. Perfect for getting an overview of entire organization, monorepo, or projects folder.
+
+Built on top of `git-summary (git-extras)` for reliable Git analysis
 
 ### Dependencies
 - perl
 - git-extras
 
 ### Installation
-Available in AUR Repository only
+Package manager installation is available in AUR Repository only
+
+- Using yay
 ```sh
 $ yay -S git-summmary
+```
+
+- Using makepkg
+```sh
+$ git clone https://aur.archlinux.org/git-summmary.git
+$ cd git-summmary
+$ makepkg -si
 ```
 
 ### Usage
