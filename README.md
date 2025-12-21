@@ -27,7 +27,7 @@ $ makepkg -si
 ### Usage
 
 ```
-$ ./git-summmary starting-directory
+$ git-summmary starting-directory
 
 Git repository found repo1
 Git repository found repo2
