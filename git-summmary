@@ -3,6 +3,7 @@
 =about
 
 Author: Farhad Mehdizada (@ferhadme)
+Url: https://github.com/ferhadme/git-summmary
 
 Perl script for visualizing repository summaries recursively starting from the specified directory location
 Uses git-summary (git-extras) as a dependency
