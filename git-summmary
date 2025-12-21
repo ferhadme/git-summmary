@@ -72,7 +72,7 @@ sub update_summary {
     my $curr_age = ($2 || 0) * 3600 + ($5 || 0) * 30 + ($8 || 0) * 7 + ($11 || 0);
     &init_min_max_params($curr_age, "age", $summ_hash_ref);
 
-    my ($curr_active) = ($curr_summ =~ /active\s*:\s(\d+)\sdays/);
+    my ($curr_active) = ($curr_summ =~ /active on\s*:\s(\d+)\sdays/);
     &init_min_max_params($curr_active, "active", $summ_hash_ref);
 
     my ($commits) = ($curr_summ =~ /commits\s*:\s(\d+)/);
@@ -91,7 +91,7 @@ sub update_summary {
 }
 
 sub init_min_max_params {
-    (my $curr, my $hash_key, my $hash_ref) = (@_);
+    my ($curr, $hash_key, $hash_ref) = (@_);
 
     if (!defined $hash_ref->{"min_$hash_key"} || $curr < $hash_ref->{"min_$hash_key"}) {
         $hash_ref->{"min_$hash_key"} = $curr;
