@@ -1,5 +1,6 @@
 ### About
 Perl script for visualizing repository summaries recursively starting from the specified directory location
+
 Uses git-summary (git-extras) as a dependency
 
 ### Dependencies
