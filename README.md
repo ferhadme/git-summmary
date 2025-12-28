@@ -10,7 +10,7 @@ Built on top of `git-summary (git-extras)` for reliable Git analysis
 - git-extras
 
 ### Installation
-Package manager installation is available in AUR Repository only
+Package manager installation is available in [https://aur.archlinux.org/packages/git-summmary](AUR) AUR Repository
 
 - Using yay
 ```sh
